@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project>
+
+  <app title="ACount" file="ACount" main="net.othrayte.acount.frontend.AndroidClient" package="net.othrayte.acount.frontend" version="0.1.0" company="othrayte" />
+  
+  <set name="fullscreen" if="target_webos" />
+  <set name="fullscreen" if="target_ios" />
+  <set name="fullscreen" if="target_android" />
+  
+  <window width="640" height="480" fps="30" orientation="portrait" resizable="true" />
+  <window width="0" height="0" if="fullscreen" />
+ 
+  <set name="BUILD_DIR" value="bin/client/" />
+
+  <classpath name="src" />
+
+  <haxelib name="nme" />
+
+  <assets path="assets" rename="assets" include="*" exclude="nme.svg" />
+
+  <ndll name="std" />
+  <ndll name="regexp" />
+  <ndll name="zlib" />
+  <ndll name="nme" haxelib="nme" />
+
+  <icon name="assets/nme.svg" />
+
+</project>

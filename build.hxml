@@ -1,0 +1,10 @@
+-php bin/server
+-cp src
+-D spod_macro
+-main net.othrayte.acount.backend.Server
+
+--next
+-neko bin/client/neko/ACount.n
+
+-cp src
+-main net.othrayte.acount.frontend.NekoClient
