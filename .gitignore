@@ -1,5 +1,4 @@
 *.tmp
 /bin/server/*
-!/bin/server/Server-HowTo.txt
 !/bin/client/neko/run.bat
 /bin/client/*

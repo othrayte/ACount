@@ -19,14 +19,6 @@
 
 package net.othrayte.acount.frontend;
 
-import nme.display.Bitmap;
-import nme.display.Sprite;
-import nme.display.StageAlign;
-import nme.display.StageScaleMode;
-import nme.events.Event;
-import nme.Assets;
-import nme.Lib;
-
 import haxe.remoting.HttpAsyncConnection;
 
 import net.othrayte.acount.core.ConstAccount;
@@ -36,6 +28,7 @@ import net.othrayte.acount.core.ConstUnPaidEntry;
 
 import net.othrayte.util.async.SyncPipe;
 
+import net.othrayte.acount.frontend.Gui;
 
 class ServerProxy extends haxe.remoting.AsyncProxy<net.othrayte.acount.backend.Server> { }
 
@@ -45,17 +38,23 @@ class AndroidClient {
 	static var proxy:ServerProxy;
 
 	public static function main() {
-		trace("ACount starting ...");
-		new AndroidClient();
-		trace("ACount stopping!");
+		try {
+			trace("ACount starting ...");
+			new AndroidClient();
+			trace("ACount stopping!");
+		} catch (e:Dynamic) {
+			trace(e);
+		}
 	}
 
 	public function new() {
-		url = "http://192.168.1.5/acount/index.php";
-		cnx = HttpAsyncConnection.urlConnect(url);
-		proxy = new ServerProxy(cnx.Server);
+		Gui.load();
+
+		//url = "http://192.168.1.5/acount/index.php";
+		//cnx = HttpAsyncConnection.urlConnect(url);
+		//proxy = new ServerProxy(cnx.Server);
 		
-		proxy.llGetAccounts(showAccounts);
+		//proxy.llGetAccounts(showAccounts);
 	}
 
 	function showAccounts(accounts:List<ConstAccount>) {
