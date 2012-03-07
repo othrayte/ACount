@@ -20,20 +20,28 @@
 package net.othrayte.acount.frontend;
 
 
+import haxe.Timer;
+
 import nme.display.Sprite;
 import nme.display.StageAlign;
 import nme.display.StageScaleMode;
 import nme.events.Event;
+import nme.events.KeyboardEvent;
 import nme.Assets;
 import nme.Lib;
 
 import net.othrayte.deepend.Test;
+import net.othrayte.deepend.Solist;
+import net.othrayte.deepend.DpndServer;
 
 class Gui extends nme.display.Sprite {
-    var d:Test;
 
     public function new() {
         super();
+
+        Lib.current.stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDownStageEvent);
+        Lib.current.stage.addEventListener(KeyboardEvent.KEY_UP, onKeyUpStageEvent);
+
         width = Lib.stage.stageWidth;
         height = Lib.stage.stageHeight;
         var button = new Sprite();
@@ -41,11 +49,34 @@ class Gui extends nme.display.Sprite {
         button.graphics.drawRect(0,0,100,100);
         button.graphics.endFill();
         addChild(button);
-        
-        d = new Test();
+
+        var d = new Test();
+        var e = new Test();
+        e.myInt = 2;
+        d.child = e;
+        d.myInt = 4;
+        trace(d.myInt2);
+        trace(d.myInt3);
+        DpndServer.start(10);
+        DpndServer.refresh();
+        trace(d.myInt2);
+        trace(d.myInt3);
+
     }
 
     public static function load() {
         nme.Lib.stage.addChild(new Gui());
+    }
+
+    public function onKeyDownStageEvent(event:KeyboardEvent):Void {
+        trace("Keydown: " + event.keyCode);
+        //event.stopImmediatePropagation();
+        //event.stopPropagation();
+    }
+
+    public function onKeyUpStageEvent(event:KeyboardEvent):Void {
+        trace("Keyup: " + event.keyCode);
+        //event.stopImmediatePropagation();
+        //event.stopPropagation();
     }
 }

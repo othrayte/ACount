@@ -21,10 +21,12 @@ package net.othrayte.deepend;
 
 class Test implements Dpnd {
 	@:const var a:Int;
-	var myInt:Int;
-	var child:Test;
-	@:eq(child!=null?child.myInt:0, child.a.b.c.myInt) var myInt2:Int;
-	@:eq(child!=null?child.myInt+myInt2:0, child.myInt, myInt2) var myInt3:Int;
+	public var myInt:Int;
+	public var child:Test;
+	@:eq(child!=null?child.myInt:0, child.myInt, myInt)
+	public var myInt2:Int;
+	@:eq(child!=null?child.myInt+myInt2:0, child.myInt, myInt2)
+	public var myInt3:Int;
 
 	public function new() {
 		trace("Hello World");
@@ -62,8 +64,8 @@ class Test2 {
 	}
 
 	private function rel() {
-		DpndServer.indirectRelate(this, ['child','a','b','c','myInt'], myInt2_ref);
 		DpndServer.indirectRelate(this, ['child','myInt'], myInt2_ref);
+		DpndServer.indirectRelate(this, ['child','myInt'], myInt3_ref);
 		DpndServer.relate(myInt2_ref, myInt3_ref);
 	}
 

@@ -26,7 +26,7 @@ typedef RelExpr = {name:String, expr:ExprDef};
 
 class DpndMacros {
     public static function macroBuild() {
-        trace("Started building");
+        //trace("Started building");
         var regCalls:Array<String> = new Array();
         var reg:Function;
         var unregCalls:Array<String> = new Array();
@@ -121,6 +121,7 @@ class DpndMacros {
                         var expr = {expr: EBlock([
                             Context.parse(""+f.name+" = v", p),
                             Context.parse("DpndServer.changed("+f.name+"_ref)", p),
+                            Context.parse("trace(\"Setting "+f.name+": \"+"+f.name+")", p),
                             Context.parse("return "+f.name, p)
                             ]), pos: p};
                         var func:Function = {expr: expr, ret: t, params:[], args:[{ name : "v", opt : false, type : t, value : null }]};
