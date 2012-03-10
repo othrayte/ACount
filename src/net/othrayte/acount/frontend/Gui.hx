@@ -44,23 +44,14 @@ class Gui extends nme.display.Sprite {
 
         width = Lib.stage.stageWidth;
         height = Lib.stage.stageHeight;
-        var button = new Sprite();
-        button.graphics.beginFill(0);
-        button.graphics.drawRect(0,0,100,100);
-        button.graphics.endFill();
-        addChild(button);
+        var square = new Square();
+        addChild(square.get());
 
-        var d = new Test();
-        var e = new Test();
-        e.myInt = 2;
-        d.child = e;
-        d.myInt = 4;
-        trace(d.myInt2);
-        trace(d.myInt3);
-        DpndServer.start(10);
-        DpndServer.refresh();
-        trace(d.myInt2);
-        trace(d.myInt3);
+        square.x = 0;
+        square.y = 0;
+        square.width = 200;
+        square.height = 300;
+        DpndServer.start(60);
 
     }
 

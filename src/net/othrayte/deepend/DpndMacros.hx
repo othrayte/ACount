@@ -54,9 +54,9 @@ class DpndMacros {
                         f.kind = FProp("default", "null", t);
                         var lock = false;
                         if (m.params.length==0)
-                            Context.error("Equation needs an expression", f.pos);
+                            Context.error("Dpnd equation needs an expression", f.pos);
                         if (m.params.length==1)
-                            Context.error("Equation needs something to depend on, else it will never execute", f.pos);
+                            Context.error("Dpnd equation needs something to depend on, else it will never execute", f.pos);
                         var eq = m.params.shift();
                         for(p in m.params) {
                             var names:Array<String> = new Array();
@@ -66,7 +66,7 @@ class DpndMacros {
                                 case EConst(c):
                                     switch(c) {
                                     case CIdent(name):
-                                        names.push(name);
+                                        names.unshift(name);
                                         if (names.length==1) {
                                             // direct relation
                                             relCalls.push("DpndServer.relate("+name+"_ref, "+f.name+"_ref)");
@@ -79,7 +79,7 @@ class DpndMacros {
                                         e = null;
                                     }
                                 case EField(expr, name):
-                                    names.push(name);
+                                    names.unshift(name);
                                     e = expr;
                                 default:
                                     e = null;
@@ -90,7 +90,7 @@ class DpndMacros {
                         // Add call back function
                         //  <- eq;
                         eq.expr = EBinop(OpAssign, {expr: EConst(CIdent(f.name)), pos: eq.pos},{expr: eq.expr, pos: eq.pos});
-                        var func:Function = {expr: eq, ret: TPath({sub:null, name:"Void", pack:[], params:[] }), params:[], args:[]};
+                        var func:Function = {expr: eq, ret: TPath({sub:null, name:"Void", pack:[], params:[] }), params:[], args:[{name: "_", type: TPath({ sub:null, name:"Int", pack:[], params:[] }), value: null,opt: false}]};
                         fields.push({name: eqCB, meta : [], kind : FFun(func), doc : null, access : [APublic], pos : f.pos});
                         
                         // Setup reg and unreg
@@ -102,11 +102,62 @@ class DpndMacros {
                         
                         dpndVar = false;
                     default:
-                        Context.error("Invalid equation field type", f.pos);
+                        Context.error("Invalid dpnd equation field type", f.pos);
                     }
                     break;
+                } else if (m.name == ":ex") {
+                    switch(f.kind) {
+                    case FFun(fun):
+                        var lock = false;
+                        if (m.params.length==0)
+                            Context.error("Dpnd executable needs something to depend on, else it will never execute", f.pos);
+                        for(p in m.params) {
+                            var names:Array<String> = new Array();
+                            var e:Expr = p;
+                            do {
+                                switch(e.expr) {
+                                case EConst(c):
+                                    switch(c) {
+                                    case CIdent(name):
+                                        names.unshift(name);
+                                        if (names.length==1) {
+                                            // direct relation
+                                            relCalls.push("DpndServer.relate("+name+"_ref, "+f.name+"_ref)");
+                                        } else {
+                                            // indirect
+                                            relCalls.push("DpndServer.indirectRelate(this, ['"+names.join("','")+"'], "+f.name+"_ref)");
+                                        }
+                                        e = null;
+                                    default:
+                                        e = null;
+                                    }
+                                case EField(expr, name):
+                                    names.unshift(name);
+                                    e = expr;
+                                default:
+                                    e = null;
+                                }
+                            } while(e!=null);
+                        }
+                        // Setup reg and unreg
+                        regCalls.push(""+f.name+"_ref = DpndServer.dependable("+f.name+")");
+                        unregCalls.push("DpndServer.notDependable("+f.name+"_ref)");
+                        
+                        // Add ref var
+                        fields.push({name: f.name+"_ref", meta: [], kind: FProp("default", "null", TPath({ sub:null, name:"Int", pack:[], params:[] })), doc : null, access : [APublic], pos : f.pos });
+                        
+                        dpndVar = false;
+                    default:
+                        Context.error("Invalid dpnd execution field type", f.pos);
+                    }
                 } else if (m.name == ":const") {
                     dpndVar = false;
+                }
+            }
+            for (a in f.access) {
+                switch (a){
+                    case APrivate: dpndVar = false;
+                    default:continue;
                 }
             }
             switch(f.kind) {
@@ -120,8 +171,8 @@ class DpndMacros {
                         // Setter
                         var expr = {expr: EBlock([
                             Context.parse(""+f.name+" = v", p),
+                            //Context.parse("trace(\"Setting "+f.name+": \"+"+f.name+")", p),
                             Context.parse("DpndServer.changed("+f.name+"_ref)", p),
-                            Context.parse("trace(\"Setting "+f.name+": \"+"+f.name+")", p),
                             Context.parse("return "+f.name, p)
                             ]), pos: p};
                         var func:Function = {expr: expr, ret: t, params:[], args:[{ name : "v", opt : false, type : t, value : null }]};

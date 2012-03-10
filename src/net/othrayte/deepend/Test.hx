@@ -23,7 +23,7 @@ class Test implements Dpnd {
 	@:const var a:Int;
 	public var myInt:Int;
 	public var child:Test;
-	@:eq(child!=null?child.myInt:0, child.myInt, myInt)
+	@:eq(child!=null?child.myInt:0, child.myInt)
 	public var myInt2:Int;
 	@:eq(child!=null?child.myInt+myInt2:0, child.myInt, myInt2)
 	public var myInt3:Int;
@@ -69,11 +69,11 @@ class Test2 {
 		DpndServer.relate(myInt2_ref, myInt3_ref);
 	}
 
-	private function calc_myInt2() {
+	private function calc_myInt2(_:Int) {
 		myInt2 = child.myInt;
 	}
 
-	private function calc_myInt3() {
+	private function calc_myInt3(_:Int) {
 		myInt2 = child.myInt+2;
 	}
 

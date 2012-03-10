@@ -1,4 +1,4 @@
-﻿/*
+/*
     Copyright © 2012, othrayte (Adrian Cowan)
 
     This file is part of Deepend.
@@ -32,16 +32,11 @@ class Solist {
 	
 	public function add(before:Int, after:Int) {
 		if (before == after) return;
-		trace(before);
-		trace(after);
 		var beforeNode:SolistNode = new SolistNode(before);
 		var afterNode:SolistNode = new SolistNode(after);
-		trace(0);
 		var result1:SolistNode = findOrAddToTree(beforeNode);
 		var result2:SolistNode = findOrAddToTree(afterNode);
-		trace(1);
 		if (result1 != null && result2 == null) { // 10
-			trace(2);
 			afterNode.next = result1.next;
 			if (afterNode.next != null) {
 				afterNode.next.prev = afterNode;
@@ -53,7 +48,6 @@ class Solist {
 			afterNode.stream = result1.stream;
 			afterNode.use = true;
 		} else if (result1 != null && result2 != null) { // 12-11
-			trace(3);
 			if (result1.stream == result2.stream) { // 11
 				if (!inOrder(result1, result2)) {
 					if (result2.prev != null) {
@@ -64,13 +58,13 @@ class Solist {
 					if (result2.next != null) {
 						result2.next.prev = result2.prev;
 					} else {
-						trace("HUH?");
+						trace("HUH?!");
 					}
 					result2.next = result1.next;
 					if (result1.next != null) {
 						result1.next.prev = result2;
 					} else {
-						orderListTails[result1.stream] = result1.next;
+						orderListTails[result1.stream] = result2;
 					}
 					result1.next = result2;
 					result2.prev = result1;
@@ -194,5 +188,9 @@ class SolistNode {
 		r = null;
 		next = null;
 		prev = null;
+	}
+
+	public function toString() {
+		return "SolistNode: "+v;
 	}
 }

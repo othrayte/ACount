@@ -23,9 +23,10 @@ import haxe.FastList;
 import haxe.Timer;
 
 class DpndServer {
-    static var maxIdx = 0;
-    static var callbacks:IntHash<Null<Void->Void>> = new IntHash();
+    static var maxIdx = 1;
+    static var callbacks:IntHash<Null<Int->Void>> = new IntHash();
     static var relations:IntHash<IntHash<Int>> = new IntHash();
+    static var indirections:List<DpndIndirection> = new List();
     static private var pending:IntHash<IntHash<Int>> = new IntHash();
     static private var solist:Solist = new Solist();
     static private var timer:Timer;
@@ -36,15 +37,16 @@ class DpndServer {
     }
 
     static public function refresh() {
+        //trace("Refresh");
         var list:Array<Int> = createRefreshList();
         pending = new IntHash();
         solist = new Solist();
 
         for (ref in list) {
-            trace("R> "+ref);
+            //trace("R> "+ref);
             var cb = callbacks.get(ref);
             if (cb != null)
-                cb();
+                cb(ref);
         }   
     }
 
@@ -105,9 +107,8 @@ class DpndServer {
     }
     static private function lodge(refDependable:Int, refDependee:Int) {
         if (refDependable == refDependee) trace("inbreading");
-        trace("Dive! "+solist);
-        solist.add(refDependable, refDependee);      
-        trace(solist.output());
+        solist.add(refDependable, refDependee);
+        //trace(solist.output());
         // If dependee not in pending set
         if (!pending.exists(refDependee)) {
             // Add after to after list
@@ -123,7 +124,7 @@ class DpndServer {
         }
     }
 
-    static public function dependable(?cb:Void->Void) {
+    static public function dependable(?cb:Int->Void) {
         callbacks.set(maxIdx, cb);
         return maxIdx++;
     }
@@ -131,7 +132,7 @@ class DpndServer {
         callbacks.remove(ref);
     }
     static public function relate(refDependable:Int, refDependee:Int) {
-        trace("Relating "+refDependable+" to "+refDependee);
+        //trace("Relating "+refDependable+" to "+refDependee);
         if (!relations.exists(refDependable)) {
             var hash = new IntHash();
             hash.set(refDependee, 1);
@@ -144,10 +145,12 @@ class DpndServer {
                 hash.set(refDependee, hash.get(refDependee)+1);
             }
         }
-        trace(relations);
+        lodge(refDependable, refDependee);
+        //trace(relations);
     }
     static public function indirectRelate(origin:Dynamic, route:Array<String>, refDependee:Int) {
-        trace("(*_*)");
+        var dI = new DpndIndirection(origin, route, refDependee);
+        indirections.push(dI);
     }
     static public function unRelate(refDependable:Int, refDependee:Int) {
         if (relations.exists(refDependable)) {
@@ -165,24 +168,22 @@ class DpndServer {
         }
     }
     static public function changed(ref:Int) {
+        //trace("Changed "+ref);
         var forwards = [ref];
         var lockOut = new IntHash();
         do {
-            trace(forwards);
             var r = forwards.shift();
-            trace(r);
             if (lockOut.exists(r)) continue;
             lockOut.set(r, null);
-            trace(relations);
+            //trace(relations);
             if (relations.exists(r)) {
                 for (key in relations.get(r).keys()) {
-                    trace(key);
                     lodge(r, key);
                     forwards.push(key);
                 }
             }
         } while (forwards.length>0);
-        trace(lockOut);
+        //trace(lockOut);
     }
 
     static private function findInArray<T>(array:Array<T>, thing:T) {
