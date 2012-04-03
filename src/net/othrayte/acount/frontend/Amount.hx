@@ -19,20 +19,28 @@
 
 package net.othrayte.acount.frontend;
 
-import nme.display.Sprite;
+import nme.text.TextField;
+import nme.text.TextFieldAutoSize;
+import nme.text.TextFormat;
 
-import net.othrayte.deepend.Dpnd;
-import net.othrayte.deepend.DpndServer;
+import net.othrayte.acount.core.Util;
 
-class Timer extends haxe.Timer, implements Dpnd {
-    public var time:Float;
+class Amount extends GuiElement {
+    var tf:TextField;
+    var amount:Int;
 
-    public function new(ms:Int) {
-        super(ms);
-        run = tick;
+    public function new(amount:Int) {
+        super();
+        this.amount = amount;
+        tf = new TextField();
+        tf.text = Util.amountStr(amount);
+        tf.autoSize = TextFieldAutoSize.LEFT;
+        var format = new TextFormat();
+        format.size = 20;
+        tf.setTextFormat(format);
+        height = tf.textHeight;
+        width = tf.textWidth;
+        sprite.addChild(tf);
     }
 
-    public function tick() {
-        time = haxe.Timer.stamp();
-    }
 }

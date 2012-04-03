@@ -19,20 +19,22 @@
 
 package net.othrayte.acount.frontend;
 
-import nme.display.Sprite;
+class CenterHorizBlock extends ParentElement {
 
-import net.othrayte.deepend.Dpnd;
-import net.othrayte.deepend.DpndServer;
+    public function new(subElement:GuiElement) {
+        super(subElement);
 
-class Timer extends haxe.Timer, implements Dpnd {
-    public var time:Float;
-
-    public function new(ms:Int) {
-        super(ms);
-        run = tick;
     }
 
-    public function tick() {
-        time = haxe.Timer.stamp();
+    @:ex(child.width,parent.width,parent.height) private function update(_:Int) {
+        trace("Update recenter");
+        trace(x+", "+y+", "+height+", "+width);
+        trace(((parent!=null)?parent.width:-1)+", "+((child!=null)?child.width:-1)+", "+((parent!=null)?parent.height:-1));
+        width = (child!=null)?child.width:0;
+        x = (parent!=null)?(parent.width-width)/2:0;
+        y = 0;
+        height = (parent!=null)?parent.height:0;
+        trace(x+", "+y+", "+height+", "+width);
     }
+
 }

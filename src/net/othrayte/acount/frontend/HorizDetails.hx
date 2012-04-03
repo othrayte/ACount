@@ -19,20 +19,17 @@
 
 package net.othrayte.acount.frontend;
 
-import nme.display.Sprite;
+class HorizDetails extends HorizElements {
 
-import net.othrayte.deepend.Dpnd;
-import net.othrayte.deepend.DpndServer;
-
-class Timer extends haxe.Timer, implements Dpnd {
-    public var time:Float;
-
-    public function new(ms:Int) {
-        super(ms);
-        run = tick;
+    public function new() {
+        super();
     }
 
-    public function tick() {
-        time = haxe.Timer.stamp();
+    @:ex(width, height) private function redraw(_:Int) {
+        sprite.graphics.clear();
+        sprite.graphics.beginFill(0x666666);
+        sprite.graphics.drawRoundRect(0, 0, width, height, 3, 3);
+        sprite.graphics.endFill();
     }
+
 }

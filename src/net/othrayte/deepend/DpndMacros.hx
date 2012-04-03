@@ -14,7 +14,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    along with Deepend.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 package net.othrayte.deepend;
@@ -35,7 +35,14 @@ class DpndMacros {
         var rel:Function;
         var fields = Context.getBuildFields();
         var constructor;
+
+        var p = Context.getLocalClass().get().pos;
+        var className = haxe.macro.Context.getLocalClass().get().name;
+
         for(f in fields) {
+            if (f.name == "_name") Context.error("The deepend library requires the use of the variable _name when in debug mode, please choose a different name", f.pos);
+            if (f.name == "_count") Context.error("The deepend library requires the use of the static variable _const when in debug mode, please choose a different name", f.pos);
+            var dpndVar:Bool = true;
             if (f.name == "new") {
                 switch(f.kind) {
                     case FFun(func):
@@ -45,10 +52,40 @@ class DpndMacros {
                         continue;
                 }
             }
-            var dpndVar:Bool = true;
+            for (a in f.access) {
+                switch (a){
+                    case APrivate: dpndVar = false;
+                    default:continue;
+                }
+            }
             var eqCB = "";
             for (m in f.meta) {
-                if (m.name == ":eq") {
+                if (m.name == ":dpdbl") {
+                    dpndVar = true;
+                    switch(f.kind) {
+                    case FProp(getF, setF, t, _):
+                        trace(setF);
+                        var func:Function = {expr:
+                            {expr:
+                                EBlock([
+                                    Context.parse("net.othrayte.deepend.DpndServer.changed("+f.name+"_ref)", f.pos),
+                                    Context.parse("return "+setF+"(v)", f.pos)
+                                ]),
+                                pos: f.pos},
+                            ret: t, params:[], args:[{name: "v", type: t, value: null,opt: false}]};
+                        fields.push({name: "_dpndWrap_"+setF, meta : [], kind : FFun(func), doc : null, access : [APrivate], pos : f.pos});
+                        f.kind = FProp(getF, "_dpndWrap_"+setF, t);
+
+                        fields.push({name: f.name+"_ref", meta: [], kind: FProp("default", "null", TPath({ sub:null, name:"Int", pack:[], params:[] })), doc : null, access : [APublic], pos : f.pos });
+                        
+                        // Setup reg and unreg
+                        var debugName = Context.defined("debug")?"null , _name+\"["+f.name+"]\"":"";
+                        regCalls.push(""+f.name+"_ref = net.othrayte.deepend.DpndServer.dependable("+debugName+")");
+                        unregCalls.push("net.othrayte.deepend.DpndServer.notDependable("+f.name+"_ref)");
+                    default:
+                        continue;
+                    }
+                } else if (m.name == ":eq") {
                     switch(f.kind) {
                     case FVar(t, _):
                         f.kind = FProp("default", "null", t);
@@ -69,10 +106,10 @@ class DpndMacros {
                                         names.unshift(name);
                                         if (names.length==1) {
                                             // direct relation
-                                            relCalls.push("DpndServer.relate("+name+"_ref, "+f.name+"_ref)");
+                                            relCalls.push("net.othrayte.deepend.DpndServer.relate("+name+"_ref, "+f.name+"_ref)");
                                         } else {
                                             // indirect
-                                            relCalls.push("DpndServer.indirectRelate(this, ['"+names.join("','")+"'], "+f.name+"_ref)");
+                                            relCalls.push("net.othrayte.deepend.DpndServer.indirectRelate(this, ['"+names.join("','")+"'], "+f.name+"_ref)");
                                         }
                                         e = null;
                                     default:
@@ -94,8 +131,13 @@ class DpndMacros {
                         fields.push({name: eqCB, meta : [], kind : FFun(func), doc : null, access : [APublic], pos : f.pos});
                         
                         // Setup reg and unreg
-                        regCalls.push(""+f.name+"_ref = DpndServer.dependable("+eqCB+")");
-                        unregCalls.push("DpndServer.notDependable("+f.name+"_ref)");
+                        var args = new List();
+                        if (eqCB!="") args.push(eqCB);
+                        if (Context.defined("debug")) {
+                            args.add("_name+\"["+f.name+"]\"");
+                        }
+                        regCalls.push(""+f.name+"_ref = net.othrayte.deepend.DpndServer.dependable("+args.join(",")+")");
+                        unregCalls.push("net.othrayte.deepend.DpndServer.notDependable("+f.name+"_ref)");
                         
                         // Add ref var
                         fields.push({name: f.name+"_ref", meta: [], kind: FProp("default", "null", TPath({ sub:null, name:"Int", pack:[], params:[] })), doc : null, access : [APublic], pos : f.pos });
@@ -122,10 +164,10 @@ class DpndMacros {
                                         names.unshift(name);
                                         if (names.length==1) {
                                             // direct relation
-                                            relCalls.push("DpndServer.relate("+name+"_ref, "+f.name+"_ref)");
+                                            relCalls.push("net.othrayte.deepend.DpndServer.relate("+name+"_ref, "+f.name+"_ref)");
                                         } else {
                                             // indirect
-                                            relCalls.push("DpndServer.indirectRelate(this, ['"+names.join("','")+"'], "+f.name+"_ref)");
+                                            relCalls.push("net.othrayte.deepend.DpndServer.indirectRelate(this, ['"+names.join("','")+"'], "+f.name+"_ref"+#if debug ", _name"+ #end")");
                                         }
                                         e = null;
                                     default:
@@ -140,8 +182,9 @@ class DpndMacros {
                             } while(e!=null);
                         }
                         // Setup reg and unreg
-                        regCalls.push(""+f.name+"_ref = DpndServer.dependable("+f.name+")");
-                        unregCalls.push("DpndServer.notDependable("+f.name+"_ref)");
+                        var debugName = Context.defined("debug")?", _name+\"["+f.name+"]\"":"";
+                        regCalls.push(""+f.name+"_ref = net.othrayte.deepend.DpndServer.dependable("+f.name+debugName+")");
+                        unregCalls.push("net.othrayte.deepend.DpndServer.notDependable("+f.name+"_ref)");
                         
                         // Add ref var
                         fields.push({name: f.name+"_ref", meta: [], kind: FProp("default", "null", TPath({ sub:null, name:"Int", pack:[], params:[] })), doc : null, access : [APublic], pos : f.pos });
@@ -152,12 +195,6 @@ class DpndMacros {
                     }
                 } else if (m.name == ":const") {
                     dpndVar = false;
-                }
-            }
-            for (a in f.access) {
-                switch (a){
-                    case APrivate: dpndVar = false;
-                    default:continue;
                 }
             }
             switch(f.kind) {
@@ -172,7 +209,7 @@ class DpndMacros {
                         var expr = {expr: EBlock([
                             Context.parse(""+f.name+" = v", p),
                             //Context.parse("trace(\"Setting "+f.name+": \"+"+f.name+")", p),
-                            Context.parse("DpndServer.changed("+f.name+"_ref)", p),
+                            Context.parse("net.othrayte.deepend.DpndServer.changed("+f.name+"_ref)", p),
                             Context.parse("return "+f.name, p)
                             ]), pos: p};
                         var func:Function = {expr: expr, ret: t, params:[], args:[{ name : "v", opt : false, type : t, value : null }]};
@@ -182,36 +219,56 @@ class DpndMacros {
                         f.kind = FProp("default", "set_"+f.name, t);
 
                         // Setup reg and unreg
-                        regCalls.push(""+f.name+"_ref = DpndServer.dependable("+eqCB+")");
-                        unregCalls.push("DpndServer.notDependable("+f.name+"_ref)");
+                        var args = new List();
+                        if (eqCB!="") args.push(eqCB);
+                        if (Context.defined("debug")) {
+                            args.add("_name+\"["+f.name+"]\"");
+                        }
+                        regCalls.push(""+f.name+"_ref = net.othrayte.deepend.DpndServer.dependable("+args.join(",")+")");
+                        unregCalls.push("net.othrayte.deepend.DpndServer.notDependable("+f.name+"_ref)");
                     }
                 default:
                     continue;
             }
         }
+
+        var foundNameFromSuperClass:Bool = false;
+        for (intf in haxe.macro.Context.getLocalClass().get().interfaces) {
+            if (intf.t.get().name == "Dpnd") foundNameFromSuperClass = true;
+        }
+
+        // add debug name functions
+        if (Context.defined("debug")) {
+            if (foundNameFromSuperClass) fields.push({name: "_name", meta: [{ pos : p, params : [], name : ":const" }], kind: FVar(TPath({ sub:null, name:"String", pack:[], params:[] }), null), doc : null, access : [APublic], pos : p });
+            fields.push({name: "_count", meta: [{ pos : p, params : [], name : ":const" }], kind: FVar(TPath({ sub:null, name:"Int", pack:[], params:[] }), {expr: EConst(CInt("0")), pos: p}), doc : null, access : [APublic, AStatic], pos : p });
+        }
+
         // Reg function
-        var p = Context.getLocalClass().get().pos;
+        p = Context.getLocalClass().get().pos;
         var expr = {expr: EBlock(Lambda.array(Lambda.map(regCalls, function (call) {return Context.parse(call, p);}))), pos: p};
         var func:Function = {expr: expr, ret: TPath({ sub:null, name:"Void", pack:[], params:[] }), params:[], args:[]};
-        fields.push({name: "reg", meta: [], kind: FFun(func), doc: null, access: [APrivate], pos: p});
+        fields.push({name: "reg_"+className, meta: [], kind: FFun(func), doc: null, access: [APrivate], pos: p});
 
         // Unreg function
         p = Context.getLocalClass().get().pos;
         expr = {expr: EBlock(Lambda.array(Lambda.map(unregCalls, function (call) {return Context.parse(call, p);}))), pos: p};
         func = {expr: expr, ret: TPath({ sub:null, name:"Void", pack:[], params:[] }), params:[], args:[]};
-        fields.push({name: "unreg", meta: [], kind: FFun(func), doc: null, access: [APrivate], pos: p});
+        fields.push({name: "unreg_"+className, meta: [], kind: FFun(func), doc: null, access: [APrivate], pos: p});
 
         // Rel function
         p = Context.getLocalClass().get().pos;
         expr = {expr: EBlock(Lambda.array(Lambda.map(relCalls, function (call) {return Context.parse(call, p);}))), pos: p};
         func = {expr: expr, ret: TPath({ sub:null, name:"Void", pack:[], params:[] }), params:[], args:[]};
-        fields.push({name: "rel", meta: [], kind: FFun(func), doc: null, access: [APrivate], pos: p});
+        fields.push({name: "rel_"+className, meta: [], kind: FFun(func), doc: null, access: [APrivate], pos: p});
         
         // Modify the constructor
         constructor.expr.expr = EBlock([
-            Context.parse("reg()", constructor.expr.pos),
+            #if debug
+            Context.parse("if (_name==null) _name = \""+className+":\"+_count++", constructor.expr.pos),
+            #end
+            Context.parse("reg_"+className+"()", constructor.expr.pos),
             {expr: constructor.expr.expr, pos: constructor.expr.pos},
-            Context.parse("rel()", constructor.expr.pos)
+            Context.parse("rel_"+className+"()", constructor.expr.pos)
         ]);
 
         return fields;

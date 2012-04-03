@@ -14,7 +14,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    along with Deepend.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 package net.othrayte.deepend;
@@ -27,6 +27,14 @@ class Test implements Dpnd {
 	public var myInt2:Int;
 	@:eq(child!=null?child.myInt+myInt2:0, child.myInt, myInt2)
 	public var myInt3:Int;
+
+    #if debug
+    @:const public var name:String;
+    static private var count:Int = 0;
+    public function generateName() {
+        return "Test-"+count;
+    }
+    #end
 
 	public function new() {
 		trace("Hello World");

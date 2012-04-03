@@ -14,7 +14,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    along with Deepend.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 package net.othrayte.deepend;
@@ -25,6 +25,9 @@ import haxe.Timer;
 class DpndServer {
     static var maxIdx = 1;
     static var callbacks:IntHash<Null<Int->Void>> = new IntHash();
+    #if debug
+    static var names:IntHash<String> = new IntHash();
+    #end
     static var relations:IntHash<IntHash<Int>> = new IntHash();
     static var indirections:List<DpndIndirection> = new List();
     static private var pending:IntHash<IntHash<Int>> = new IntHash();
@@ -37,13 +40,16 @@ class DpndServer {
     }
 
     static public function refresh() {
-        //trace("Refresh");
+        trace("Refresh");
         var list:Array<Int> = createRefreshList();
         pending = new IntHash();
         solist = new Solist();
 
         for (ref in list) {
-            //trace("R> "+ref);
+            #if debug
+            var name = names.get(ref)!=null?names.get(ref):"Unknown-"+ref;
+            trace("R> "+name);
+            #end
             var cb = callbacks.get(ref);
             if (cb != null)
                 cb(ref);
@@ -113,19 +119,25 @@ class DpndServer {
         if (!pending.exists(refDependee)) {
             // Add after to after list
             var temp = new IntHash();
-            temp.set(refDependable, null);
+            temp.set(refDependable, 0);
             pending.set(refDependee, temp);
         } else { // Else (dependee is in pending set)
             // If dependable isn't already in the set
             if (!pending.get(refDependee).exists(refDependable)) {
                 // add to schedule
-                pending.get(refDependee).set(refDependable, null);
+                pending.get(refDependee).set(refDependable, 0);
             }
         }
     }
-
-    static public function dependable(?cb:Int->Void) {
+    static public function dependable(?cb:Int->Void
+    #if debug
+                                        ,?name:String
+    #end
+                                                    ) {
         callbacks.set(maxIdx, cb);
+        #if debug
+        names.set(maxIdx, name);
+        #end
         return maxIdx++;
     }
     static public function notDependable(ref:Int) {
@@ -146,10 +158,15 @@ class DpndServer {
             }
         }
         lodge(refDependable, refDependee);
+        #if debug
+        var name2 = names.get(refDependable)!=null?names.get(refDependable):"Unknown-"+refDependable;
+        var name1 = names.get(refDependee)!=null?names.get(refDependee):"Unknown-"+refDependee;
+        trace(name1+" >>> "+name2);
+        #end
         //trace(relations);
     }
-    static public function indirectRelate(origin:Dynamic, route:Array<String>, refDependee:Int) {
-        var dI = new DpndIndirection(origin, route, refDependee);
+    static public function indirectRelate(origin:Dynamic, route:Array<String>, refDependee:Int #if debug, ?name:String="Unknown" #end) {
+        var dI = new DpndIndirection(origin, route, refDependee #if debug, name #end);
         indirections.push(dI);
     }
     static public function unRelate(refDependable:Int, refDependee:Int) {
@@ -168,7 +185,10 @@ class DpndServer {
         }
     }
     static public function changed(ref:Int) {
-        //trace("Changed "+ref);
+        #if debug
+        var name = names.get(ref)!=null?names.get(ref):"Unknown-"+ref;
+        trace("C> "+name);
+        #end
         var forwards = [ref];
         var lockOut = new IntHash();
         do {

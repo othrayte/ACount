@@ -14,7 +14,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    along with Deepend.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 package net.othrayte.deepend;
@@ -28,7 +28,7 @@ class DpndIndirection {
     var idx:Int;
     var refDependee:Int;
 
-    public function new(origin:Dynamic, route:Array<String>, refDependee:Int) {
+    public function new(origin:Dynamic, route:Array<String>, refDependee:Int #if debug, name:String #end) {
         this.route = route;
         this.refDependee = refDependee;
         idx = 0;
@@ -38,11 +38,15 @@ class DpndIndirection {
         objs = new Array();
         objs[0] = origin;
 
-        for (name in route) {
-            cbRefs.push(DpndServer.dependable(trigger));
-            if (cbRefs.length>1) DpndServer.relate(cbRefs[cbRefs.length-2], cbRefs[cbRefs.length-1]);
+        for (element in route) {
+            if (cbRefs.length<route.length-1) {
+                trace(element);
+                cbRefs.push(DpndServer.dependable(trigger #if debug, name+="["+element+"]" #end));
+                if (cbRefs.length>1) DpndServer.relate(cbRefs[cbRefs.length-2], cbRefs[cbRefs.length-1]);
+            }
         }
-        DpndServer.relate(cbRefs[cbRefs.length-1], refDependee);
+
+        cbRefs.push(refDependee);
 
         recheck(0);
     }
@@ -62,11 +66,12 @@ class DpndIndirection {
         //trace("rc-"+i);
         if (objs[i]!=null) {
             if (i == route.length) {
-                idx = i;
+                idx = i-1;
             } else {
                 //trace(route[i]);
                 if (refs[i]==0) {
-                    refs[i] = Reflect.field(objs[i], route[i]+"_ref");
+                    if (Reflect.hasField(objs[i], route[i]+"_ref"))
+                        refs[i] = Reflect.field(objs[i], route[i]+"_ref");
                     if (refs[i]!=0) DpndServer.relate(refs[i], cbRefs[i]);
                 }
                 var newObj = Reflect.field(objs[i], route[i]);
@@ -95,7 +100,7 @@ class DpndIndirection {
         for (j in i ... idx) {
             if (j != route.length) {
                 objs[j+1] = null;
-                DpndServer.unRelate(refs[j], cbRefs[j]);
+                if (refs[j]!=0) DpndServer.unRelate(refs[j], cbRefs[j]);
                 refs[j] = 0;
             }
         }

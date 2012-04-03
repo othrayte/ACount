@@ -19,21 +19,31 @@
 
 package net.othrayte.acount.frontend;
 
-class Square extends GuiElement {
-    private var timer:Timer;
+import net.othrayte.acount.core.ConstAccount;
 
-    public function new(width:Float, height:Float) {
+class AccountSummary extends GuiElement {
+    private var account:ConstAccount;
+    private var hDetails:HorizDetails;
+
+    public function new(account:ConstAccount) {
         super();
-        this.width = width;
-        this.height = height;
-        timer = new Timer(cast 1000/60);
+        trace("AccountSummary");
+        this.account = account;
+        hDetails = new HorizDetails();
+        sprite.addChild(hDetails.get());
+        hDetails.append(new Title(account.name));
+        hDetails.append(new Amount(account.balance));
+        trace("AccountSummary - end");
     }
 
-    @:ex(x,y,width,height,timer.time) private function redraw(_:Int) {
-        sprite.graphics.clear();
-        sprite.graphics.beginFill(0xff9900);
-        sprite.graphics.drawRect(x,y,width,(Math.sin(timer.time)*height+height)/2);
-        sprite.graphics.endFill();
+    @:ex(hDetails.width) private function _width(_:Int) {
+        width = (hDetails!=null)?hDetails.width:0;
+        trace(width);
+    }
+
+    @:ex(hDetails.height) private function _height(_:Int) {
+        height = (hDetails!=null)?hDetails.height:0;
+        trace(height);
     }
 
 }

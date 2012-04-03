@@ -14,7 +14,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    along with ACount.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 package net.othrayte.acount.frontend;
@@ -34,29 +34,26 @@ import net.othrayte.deepend.Test;
 import net.othrayte.deepend.Solist;
 import net.othrayte.deepend.DpndServer;
 
-class Gui extends nme.display.Sprite {
+import net.othrayte.acount.core.ConstAccount;
+
+class Gui {
+    var stage:Stage;
 
     public function new() {
-        super();
-
+        #if (flash9 || flash10)
+        haxe.Log.trace = function(v,?pos) { untyped __global__["trace"](pos.className+"#"+pos.methodName+"("+pos.lineNumber+"):",v); }
+        #elseif flash
+        haxe.Log.trace = function(v,?pos) { flash.Lib.trace(pos.className+"#"+pos.methodName+"("+pos.lineNumber+"): "+v); }
+        #end
         Lib.current.stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDownStageEvent);
         Lib.current.stage.addEventListener(KeyboardEvent.KEY_UP, onKeyUpStageEvent);
+        stage = new Stage(new CenterHorizBlock(new AccountSummary(new ConstAccount("TestAccount", "A test account", -10523))));
 
-        width = Lib.stage.stageWidth;
-        height = Lib.stage.stageHeight;
-        var square = new Square();
-        addChild(square.get());
-
-        square.x = 0;
-        square.y = 0;
-        square.width = 200;
-        square.height = 300;
         DpndServer.start(60);
-
     }
 
     public static function load() {
-        nme.Lib.stage.addChild(new Gui());
+        
     }
 
     public function onKeyDownStageEvent(event:KeyboardEvent):Void {

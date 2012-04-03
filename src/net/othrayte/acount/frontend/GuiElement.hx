@@ -24,15 +24,37 @@ import nme.display.Sprite;
 import net.othrayte.deepend.Dpnd;
 import net.othrayte.deepend.DpndServer;
 
-class Timer extends haxe.Timer, implements Dpnd {
-    public var time:Float;
+class GuiElement implements Dpnd {
+    public var x:Float;
+    public var y:Float;
+    public var width:Float;
+    public var height:Float;
+    public var parent:GuiElement;
+    private var sprite:Sprite;
 
-    public function new(ms:Int) {
-        super(ms);
-        run = tick;
+    public function new() {
+        x = 0;
+        y = 0;
+        width = 10;
+        height = 10;
+        sprite = new Sprite();
     }
 
-    public function tick() {
-        time = haxe.Timer.stamp();
+    public function get() {
+        return sprite;
+    }  
+
+    private function setParent(element:GuiElement) {
+        parent = element;
+    } 
+
+    private function unSetParent() {
+        parent = null;
     }
+
+    @:ex(x, y, width, height) private function realign(_:Int) {
+        sprite.x = x;
+        sprite.y = y;
+    }
+
 }

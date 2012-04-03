@@ -14,7 +14,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    along with ACount.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 package net.othrayte.acount.frontend;
@@ -37,18 +37,20 @@ class AndroidClient {
 	static var cnx:HttpAsyncConnection;
 	static var proxy:ServerProxy;
 
+	var gui:Gui;
+
 	public static function main() {
-		try {
+		//try {
 			trace("ACount starting ...");
 			new AndroidClient();
 			trace("ACount stopping!");
-		} catch (e:Dynamic) {
-			trace(e);
-		}
+		//} catch (e:Dynamic) {
+		//	trace(e);
+		//}
 	}
 
 	public function new() {
-		Gui.load();
+		gui = new Gui();
 
 		//url = "http://192.168.1.5/acount/index.php";
 		//cnx = HttpAsyncConnection.urlConnect(url);

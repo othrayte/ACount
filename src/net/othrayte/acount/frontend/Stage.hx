@@ -19,20 +19,17 @@
 
 package net.othrayte.acount.frontend;
 
-import nme.display.Sprite;
+import nme.Lib;
 
-import net.othrayte.deepend.Dpnd;
-import net.othrayte.deepend.DpndServer;
+class Stage extends ParentElement {
 
-class Timer extends haxe.Timer, implements Dpnd {
-    public var time:Float;
-
-    public function new(ms:Int) {
-        super(ms);
-        run = tick;
+    public function new(subElement:GuiElement) {
+        super(subElement);
+        x = 0;
+        y = 0;
+        width = Lib.current.stage.stageWidth;
+        height = Lib.current.stage.stageHeight;
+        Lib.current.stage.addChild(sprite);
     }
 
-    public function tick() {
-        time = haxe.Timer.stamp();
-    }
 }
